@@ -7,7 +7,6 @@ from astrbot.api import logger
 from astrbot.api.event import AstrMessageEvent, MessageChain, filter
 from astrbot.api.provider import ProviderRequest
 from astrbot.api.star import Context, Star
-from astrbot.api.web import error_response, json_response, request
 from astrbot.core.agent.tool import ToolSet
 from astrbot.core.config import AstrBotConfig
 from astrbot.core.star.filter.command import CommandFilter
@@ -18,7 +17,7 @@ from astrbot.core.star.star_handler import EventType, star_handlers_registry
 from .catalog import CapabilityItem, render_section, select_items
 
 PLUGIN_NAME = "astrbot_plugin_auto_intro"
-PLUGIN_VERSION = "1.0.5"
+PLUGIN_VERSION = "1.0.6"
 PROMPT_MARKER = "AstrBot自动介绍内容标记"
 TOOL_RULE_MARKER = "AstrBot自我介绍工具规则标记"
 INTRO_QUERY_HINTS = (
@@ -70,18 +69,7 @@ class AutoIntroPlugin(Star):
     def __init__(self, context: Context, config: AstrBotConfig) -> None:
         super().__init__(context)
         self.config = config
-        context.register_web_api(
-            f"/{PLUGIN_NAME}/filters",
-            self.get_filters,
-            ["GET"],
-            "读取自我介绍能力过滤规则",
-        )
-        context.register_web_api(
-            f"/{PLUGIN_NAME}/filters/save",
-            self.save_filters,
-            ["POST"],
-            "保存自我介绍能力过滤规则",
-        )
+        self._refresh_filter_options()
 
     def _cfg_bool(self, key: str, default: bool) -> bool:
         value = self.config.get(key, default)
@@ -170,6 +158,39 @@ class AutoIntroPlugin(Star):
             self._cfg_limit("max_commands"),
         )
 
+    def _refresh_filter_options(self) -> None:
+        schema = self.config.schema
+        if not isinstance(schema, dict):
+            return
+
+        groups = {
+            "tool": self._tools_unfiltered(),
+            "plugin": self._plugins_unfiltered(),
+            "command": self._commands_unfiltered(),
+        }
+        for prefix, items in groups.items():
+            options = [
+                item.name for item in select_items(items, [], [], 10000)
+            ]
+            for suffix in ("allowlist", "blocklist"):
+                field = schema.get(f"{prefix}_{suffix}")
+                if isinstance(field, dict):
+                    field["options"] = options
+
+    @filter.on_astrbot_loaded()
+    async def refresh_filter_options_after_startup(self) -> None:
+        self._refresh_filter_options()
+
+    @filter.on_plugin_loaded()
+    async def refresh_filter_options_after_plugin_loaded(self, metadata: Any) -> None:
+        self._refresh_filter_options()
+
+    @filter.on_plugin_unloaded()
+    async def refresh_filter_options_after_plugin_unloaded(
+        self, metadata: Any
+    ) -> None:
+        self._refresh_filter_options()
+
     def _capability_catalog(self) -> str:
         sections = [
             render_section("可用工具", self._tools()),
@@ -177,120 +198,6 @@ class AutoIntroPlugin(Star):
             render_section("可用命令", self._commands()),
         ]
         return "\n\n".join(section for section in sections if section)
-
-    def _filter_payload(self) -> dict[str, Any]:
-        groups = {
-            "tools": select_items(self._tools_unfiltered(), [], [], 10000),
-            "plugins": select_items(self._plugins_unfiltered(), [], [], 10000),
-            "commands": select_items(self._commands_unfiltered(), [], [], 10000),
-        }
-        valid = {key: {item.name for item in items} for key, items in groups.items()}
-        block = {
-            "tools": [
-                value
-                for value in self.config.get("tool_blocklist", [])
-                if value in valid["tools"]
-            ],
-            "plugins": [
-                value
-                for value in self.config.get("plugin_blocklist", [])
-                if value in valid["plugins"]
-            ],
-            "commands": [
-                value
-                for value in self.config.get("command_blocklist", [])
-                if value in valid["commands"]
-            ],
-        }
-        allow = {
-            "tools": [
-                value
-                for value in self.config.get("tool_allowlist", [])
-                if value in valid["tools"] and value not in block["tools"]
-            ],
-            "plugins": [
-                value
-                for value in self.config.get("plugin_allowlist", [])
-                if value in valid["plugins"] and value not in block["plugins"]
-            ],
-            "commands": [
-                value
-                for value in self.config.get("command_allowlist", [])
-                if value in valid["commands"] and value not in block["commands"]
-            ],
-        }
-        return {
-            "groups": {
-                key: [
-                    {
-                        "value": item.name,
-                        "description": item.description,
-                        "owner": item.owner,
-                    }
-                    for item in items
-                ]
-                for key, items in groups.items()
-            },
-            "selected": {
-                "allow": allow,
-                "block": block,
-            },
-        }
-
-    async def get_filters(self):
-        return json_response(self._filter_payload())
-
-    async def save_filters(self):
-        payload = await request.json(default={})
-        if not isinstance(payload, dict):
-            return error_response("请求体必须是对象", status_code=400)
-        current = self._filter_payload()["groups"]
-        mapping = {
-            "allow": {
-                "tools": "tool_allowlist",
-                "plugins": "plugin_allowlist",
-                "commands": "command_allowlist",
-            },
-            "block": {
-                "tools": "tool_blocklist",
-                "plugins": "plugin_blocklist",
-                "commands": "command_blocklist",
-            },
-        }
-        updates: dict[str, list[str]] = {}
-        normalized: dict[str, dict[str, list[str]]] = {"allow": {}, "block": {}}
-        for mode, groups in mapping.items():
-            mode_payload = payload.get(mode, {})
-            if not isinstance(mode_payload, dict):
-                return error_response(f"{mode} 必须是对象", status_code=400)
-            for group, config_key in groups.items():
-                selected = mode_payload.get(group, [])
-                if not isinstance(selected, list) or not all(
-                    isinstance(value, str) for value in selected
-                ):
-                    return error_response(
-                        f"{mode}.{group} 必须是字符串列表", status_code=400
-                    )
-                valid = {item["value"] for item in current[group]}
-                invalid = [value for value in selected if value not in valid]
-                if invalid:
-                    return error_response(
-                        f"{mode}.{group} 包含无效选项：{', '.join(invalid)}",
-                        status_code=400,
-                    )
-                normalized[mode][group] = list(dict.fromkeys(selected))
-                updates[config_key] = normalized[mode][group]
-        for group in ("tools", "plugins", "commands"):
-            conflict = set(normalized["allow"][group]) & set(
-                normalized["block"][group]
-            )
-            if conflict:
-                return error_response(
-                    f"{group} 不能同时加入白名单和黑名单：{', '.join(sorted(conflict))}",
-                    status_code=400,
-                )
-        await self.config.save_config_async(updates)
-        return json_response({"saved": True, "selected": normalized})
 
     def _intro_source(self, query: str = "") -> str:
         custom_intro = str(self.config.get("introduction", "")).strip()

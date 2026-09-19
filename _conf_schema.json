@@ -50,15 +50,16 @@
   "tool_allowlist": {
     "type": "list",
     "description": "工具白名单",
-    "hint": "请在插件详情页的能力过滤页面中多选。留空表示允许全部。",
-    "invisible": true,
-    "default": []
+    "hint": "在当前可用工具中多选。留空表示允许全部，黑名单优先。",
+    "default": [],
+    "options": []
   },
   "tool_blocklist": {
     "type": "list",
-    "description": "工具排除列表",
-    "invisible": true,
-    "default": []
+    "description": "工具黑名单",
+    "hint": "始终排除所选工具，优先级高于白名单。",
+    "default": [],
+    "options": []
   },
   "max_tools": {
     "type": "int",
@@ -73,15 +74,16 @@
   "plugin_allowlist": {
     "type": "list",
     "description": "插件白名单",
-    "hint": "请在插件详情页的能力过滤页面中多选。留空表示允许全部。",
-    "invisible": true,
-    "default": []
+    "hint": "在当前已启用插件中多选。留空表示允许全部，黑名单优先。",
+    "default": [],
+    "options": []
   },
   "plugin_blocklist": {
     "type": "list",
-    "description": "插件排除列表",
-    "invisible": true,
-    "default": []
+    "description": "插件黑名单",
+    "hint": "始终排除所选插件，优先级高于白名单。",
+    "default": [],
+    "options": []
   },
   "max_plugins": {
     "type": "int",
@@ -96,15 +98,16 @@
   "command_allowlist": {
     "type": "list",
     "description": "命令白名单",
-    "hint": "请在插件详情页的能力过滤页面中多选。留空表示允许全部。",
-    "invisible": true,
-    "default": []
+    "hint": "在当前可用命令中多选。留空表示允许全部，黑名单优先。",
+    "default": [],
+    "options": []
   },
   "command_blocklist": {
     "type": "list",
-    "description": "命令排除列表",
-    "invisible": true,
-    "default": []
+    "description": "命令黑名单",
+    "hint": "始终排除所选命令，优先级高于白名单。",
+    "default": [],
+    "options": []
   },
   "max_commands": {
     "type": "int",

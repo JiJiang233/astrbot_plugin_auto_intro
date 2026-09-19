@@ -17,9 +17,9 @@ from astrbot.core.star.star_handler import EventType, star_handlers_registry
 from .catalog import CapabilityItem, render_section, select_items
 
 PLUGIN_NAME = "astrbot_plugin_auto_intro"
-PLUGIN_VERSION = "1.0.3"
-PROMPT_MARKER = "[AstrBot Auto Introduction]"
-TOOL_RULE_MARKER = "[AstrBot Self Introduction Tool Rule]"
+PLUGIN_VERSION = "1.0.4"
+PROMPT_MARKER = "AstrBot自动介绍内容标记"
+TOOL_RULE_MARKER = "AstrBot自我介绍工具规则标记"
 INTRO_QUERY_HINTS = (
     "你是谁",
     "介绍一下你自己",
@@ -43,6 +43,7 @@ FIXED_TOOL_RULE = (
     "插件或命令，以及其他意图相近的问题时，必须调用 "
     "show_self_introduction 工具取得最新自我介绍和能力目录，再根据工具结果回答。"
     "不要仅凭记忆回答，不要虚构工具结果中不存在的能力。"
+    "回答时使用纯文本，不使用Markdown标题、列表符号、表格或代码块。"
 )
 
 
@@ -161,11 +162,11 @@ class AutoIntroPlugin(Star):
         catalog = self._capability_catalog()
         parts = []
         if custom_intro:
-            parts.append(f"## 自我介绍基础内容\n{custom_intro}")
+            parts.append(f"自我介绍基础内容：\n{custom_intro}")
         if catalog:
             parts.append(catalog)
         if query:
-            parts.append(f"## 用户当前问题\n{query.strip()}")
+            parts.append(f"用户当前问题：\n{query.strip()}")
         return "\n\n".join(parts).strip()
 
     def _injected_prompt(self) -> str:
@@ -174,6 +175,7 @@ class AutoIntroPlugin(Star):
         return (
             f"{PROMPT_MARKER}\n{rule}\n\n"
             "介绍能力时结合用户问题选择相关内容，不要机械罗列无关项目。"
+            "回答时使用纯文本，不使用Markdown格式。"
             f"\n\n{source}"
         ).strip()
 

@@ -45,8 +45,8 @@ def render_section(title: str, items: Iterable[CapabilityItem]) -> str:
     lines = []
     for item in items:
         detail = item.description.strip() or "无补充说明"
-        owner = f"（来源：{item.owner}）" if item.owner else ""
-        lines.append(f"- {item.name}{owner}: {detail}")
+        owner = item.owner or "未标注"
+        lines.append(f"名称：{item.name}；来源：{owner}；说明：{detail}")
     if not lines:
         return ""
-    return f"## {title}\n" + "\n".join(lines)
+    return f"{title}：\n" + "\n".join(lines)

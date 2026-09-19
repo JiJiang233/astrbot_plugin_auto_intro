@@ -7,6 +7,7 @@ from astrbot.api import logger
 from astrbot.api.event import AstrMessageEvent, MessageChain, filter
 from astrbot.api.provider import ProviderRequest
 from astrbot.api.star import Context, Star
+from astrbot.core.agent.tool import ToolSet
 from astrbot.core.config import AstrBotConfig
 from astrbot.core.star.filter.command import CommandFilter
 from astrbot.core.star.filter.command_group import CommandGroupFilter
@@ -16,9 +17,26 @@ from astrbot.core.star.star_handler import EventType, star_handlers_registry
 from .catalog import CapabilityItem, render_section, select_items
 
 PLUGIN_NAME = "astrbot_plugin_auto_intro"
-PLUGIN_VERSION = "1.0.2"
+PLUGIN_VERSION = "1.0.3"
 PROMPT_MARKER = "[AstrBot Auto Introduction]"
 TOOL_RULE_MARKER = "[AstrBot Self Introduction Tool Rule]"
+INTRO_QUERY_HINTS = (
+    "你是谁",
+    "介绍一下你自己",
+    "自我介绍",
+    "怎么用",
+    "如何使用",
+    "有什么功能",
+    "能做什么",
+    "你会什么",
+    "哪些功能",
+    "什么工具",
+    "哪些工具",
+    "什么插件",
+    "哪些插件",
+    "什么命令",
+    "哪些命令",
+)
 FIXED_TOOL_RULE = (
     f"{TOOL_RULE_MARKER}\n"
     "当用户询问你是谁、怎么使用、有什么功能、你会什么、支持哪些工具、"
@@ -173,6 +191,20 @@ class AutoIntroPlugin(Star):
                 additions.append(prompt)
         if additions:
             req.system_prompt = "\n\n".join([system_prompt, *additions]).strip()
+        query = (req.prompt or event.message_str or "").strip().lower()
+        if any(hint in query for hint in INTRO_QUERY_HINTS):
+            tool = self.context.get_llm_tool_manager().get_func(
+                "show_self_introduction"
+            )
+            if tool:
+                if req.func_tool is None:
+                    req.func_tool = ToolSet()
+                req.func_tool.add_tool(tool)
+                req.system_prompt = (
+                    f"{req.system_prompt}\n\n"
+                    "本轮用户正在询问身份或能力。必须先调用 "
+                    "show_self_introduction 工具获取实时目录，再回答用户。"
+                ).strip()
 
     @filter.llm_tool(name="show_self_introduction")
     async def show_self_introduction(

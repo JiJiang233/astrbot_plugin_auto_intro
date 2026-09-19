@@ -2,7 +2,7 @@ name: astrbot_plugin_auto_intro
 display_name: LLM 自动自我介绍
 desc: 新增好友或机器人新加入群聊时调用当前会话默认 LLM 生成自我介绍，并为普通对话注入可配置的介绍规则、工具、插件和命令目录。
 short_desc: 让 LLM 在首次见面和功能咨询时准确介绍自己
-version: 1.0.6
+version: 1.0.8
 author: JiJiang233
 repo: https://github.com/JiJiang233/astrbot_plugin_auto_intro
 astrbot_version: ">=4.28,<5"

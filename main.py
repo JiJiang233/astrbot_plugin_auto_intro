@@ -17,7 +17,7 @@ from astrbot.core.star.star_handler import EventType, star_handlers_registry
 from .catalog import CapabilityItem, render_section, select_items
 
 PLUGIN_NAME = "astrbot_plugin_auto_intro"
-PLUGIN_VERSION = "1.0.6"
+PLUGIN_VERSION = "1.0.8"
 PROMPT_MARKER = "AstrBot自动介绍内容标记"
 TOOL_RULE_MARKER = "AstrBot自我介绍工具规则标记"
 INTRO_QUERY_HINTS = (

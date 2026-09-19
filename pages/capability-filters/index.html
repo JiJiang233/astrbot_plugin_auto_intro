@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>能力过滤</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <main>
+      <header>
+        <div>
+          <p class="eyebrow">AUTO INTRO</p>
+          <h1>能力过滤</h1>
+          <p class="intro">白名单为空时允许全部；黑名单始终优先。选项来自当前运行中的 AstrBot。</p>
+        </div>
+        <button id="save" class="primary">保存选择</button>
+      </header>
+      <div id="status" role="status"></div>
+      <section id="groups"></section>
+    </main>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

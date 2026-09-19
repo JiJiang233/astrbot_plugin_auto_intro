@@ -1,0 +1,20 @@
+:root { color-scheme: light; --bg:#f4f5f7; --card:#fff; --text:#17191c; --muted:#68707c; --line:#dfe3e8; --accent:#265dff; --danger:#bf3b4b; }
+[data-theme="dark"] { color-scheme:dark; --bg:#111316; --card:#1b1e23; --text:#f1f3f5; --muted:#9aa3af; --line:#333842; --accent:#7da0ff; --danger:#ff8693; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--text); font:14px/1.5 system-ui,sans-serif; }
+main { max-width:1180px; margin:auto; padding:28px; }
+header,.group-head,.column-head { display:flex; align-items:center; justify-content:space-between; gap:16px; }
+h1 { margin:0; font-size:30px; } h2 { margin:0; } p { color:var(--muted); }
+.eyebrow { color:var(--accent); letter-spacing:.18em; font-weight:700; margin:0 0 4px; }
+button { border:1px solid var(--line); background:transparent; color:var(--text); border-radius:9px; padding:8px 12px; cursor:pointer; }
+.primary { background:var(--accent); border-color:var(--accent); color:white; padding:11px 18px; }
+#status { min-height:32px; padding:8px 0; } .success { color:#23834b; } .error { color:var(--danger); }
+.group { background:var(--card); border:1px solid var(--line); border-radius:15px; padding:20px; margin:18px 0; }
+.group-head p { margin:3px 0 0; }.search { width:260px; border:1px solid var(--line); background:var(--bg); color:var(--text); border-radius:9px; padding:10px 12px; }
+.columns { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:16px; }
+.column { border:1px solid var(--line); border-radius:12px; padding:14px; }.column.danger strong { color:var(--danger); }
+.column-head + p { margin:5px 0 12px; font-size:12px; }.options { max-height:420px; overflow:auto; display:grid; gap:8px; }
+.option { display:flex; gap:10px; padding:10px; border:1px solid var(--line); border-radius:9px; cursor:pointer; }
+.option:hover { border-color:var(--accent); }.option input { margin-top:4px; }.option span { display:grid; min-width:0; }
+.option b { overflow-wrap:anywhere; }.option small { color:var(--accent); }.option em { color:var(--muted); font-style:normal; }
+@media (max-width:760px) { main{padding:16px}.columns{grid-template-columns:1fr}header,.group-head{align-items:flex-start;flex-direction:column}.search{width:100%} }

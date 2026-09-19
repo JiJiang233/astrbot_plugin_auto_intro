@@ -1,0 +1,39 @@
+# astrbot_plugin_auto_intro
+
+一个可直接发布到 AstrBot 插件市场的 LLM 自动自我介绍插件。
+
+## 功能
+
+- OneBot v11（NapCat/Lagrange）新增好友时，调用当前会话默认 LLM 生成并发送自我介绍。
+- 机器人自身新加入群聊时，调用当前群会话默认 LLM 生成并发送自我介绍。
+- 在默认 LLM 请求前注入稳定、可配置的自我介绍规则。
+- 可选择向 LLM 暴露当前可用工具、已启用插件和命令目录。
+- 工具、插件、命令均支持白名单、排除列表和数量上限。
+- 暴露 show_self_introduction LLM 工具，响应“怎么用”“有什么功能”等问题。
+- LLM 调用异常或超时时自动发送可配置的回退介绍。
+
+## 安装
+
+将本仓库克隆到 AstrBot 的 data/plugins/astrbot_plugin_auto_intro 目录，在 WebUI 中重载插件。要求 AstrBot >=4.28,<5。
+
+## 配置
+
+在 AstrBot WebUI 的插件管理页面打开本插件配置，可设置介绍内容、事件开关、能力暴露范围、白名单、排除列表、数量上限、LLM 超时和回退文本。
+
+配置由 AstrBot 按规范保存至 data/config/astrbot_plugin_auto_intro_config.json，不会写入插件目录或 Git 提交。
+
+## 事件支持范围
+
+自动欢迎事件明确支持 aiocqhttp 的 OneBot v11 friend_add，以及新成员为机器人自身的 group_increase。普通 LLM 提示词注入与工具不受该事件范围限制。
+
+## 安全与性能
+
+- 不使用 requests，不执行同步网络请求。
+- LLM 调用使用 AstrBot 统一异步接口并设置超时。
+- 不修改 AstrBot 源码。
+- 不在插件目录持久化运行数据。
+- 不会把未启用插件或停用工具加入能力目录。
+
+## 许可证
+
+[MIT](LICENSE)

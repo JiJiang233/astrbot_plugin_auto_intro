@@ -17,7 +17,7 @@ from astrbot.core.star.star_handler import EventType, star_handlers_registry
 from .catalog import CapabilityItem, render_section, select_items
 
 PLUGIN_NAME = "astrbot_plugin_auto_intro"
-PLUGIN_VERSION = "1.0.6"
+PLUGIN_VERSION = "1.0.7"
 PROMPT_MARKER = "AstrBot自动介绍内容标记"
 TOOL_RULE_MARKER = "AstrBot自我介绍工具规则标记"
 INTRO_QUERY_HINTS = (
@@ -158,6 +158,56 @@ class AutoIntroPlugin(Star):
             self._cfg_limit("max_commands"),
         )
 
+    def _merge_selected_plugin_commands(self) -> bool:
+        selected_plugins = {
+            str(value).strip().lower()
+            for value in self.config.get("plugin_allowlist", [])
+            if str(value).strip()
+        }
+        selected_owners = {
+            item.owner
+            for item in self._plugins_unfiltered()
+            if item.name.strip().lower() in selected_plugins
+        }
+        linked_commands = [
+            item.name
+            for item in select_items(self._commands_unfiltered(), [], [], 10000)
+            if item.owner in selected_owners
+        ]
+        current = [
+            str(value).strip()
+            for value in self.config.get("command_allowlist", [])
+            if str(value).strip()
+        ]
+        previous_linked = [
+            str(value).strip()
+            for value in self.config.get("linked_plugin_commands", [])
+            if str(value).strip()
+        ]
+        previous_keys = {value.lower() for value in previous_linked}
+        current_keys = {value.lower() for value in current}
+
+        manual = [value for value in current if value.lower() not in previous_keys]
+        kept_linked = [
+            value for value in linked_commands if value.lower() in previous_keys
+        ]
+        newly_linked = [
+            value for value in linked_commands if value.lower() not in current_keys
+        ]
+        next_linked = list(dict.fromkeys([*kept_linked, *newly_linked]))
+        merged = list(dict.fromkeys([*manual, *next_linked]))
+        if merged == current and next_linked == previous_linked:
+            return False
+        self.config["command_allowlist"] = merged
+        self.config["linked_plugin_commands"] = next_linked
+        return True
+
+    async def _refresh_and_sync_filters(self) -> None:
+        changed = self._merge_selected_plugin_commands()
+        self._refresh_filter_options()
+        if changed:
+            await self.config.save_config_async()
+
     def _refresh_filter_options(self) -> None:
         schema = self.config.schema
         if not isinstance(schema, dict):
@@ -179,17 +229,17 @@ class AutoIntroPlugin(Star):
 
     @filter.on_astrbot_loaded()
     async def refresh_filter_options_after_startup(self) -> None:
-        self._refresh_filter_options()
+        await self._refresh_and_sync_filters()
 
     @filter.on_plugin_loaded()
     async def refresh_filter_options_after_plugin_loaded(self, metadata: Any) -> None:
-        self._refresh_filter_options()
+        await self._refresh_and_sync_filters()
 
     @filter.on_plugin_unloaded()
     async def refresh_filter_options_after_plugin_unloaded(
         self, metadata: Any
     ) -> None:
-        self._refresh_filter_options()
+        await self._refresh_and_sync_filters()
 
     def _capability_catalog(self) -> str:
         sections = [

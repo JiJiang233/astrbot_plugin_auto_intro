@@ -74,7 +74,7 @@
   "plugin_allowlist": {
     "type": "list",
     "description": "插件白名单",
-    "hint": "在当前已启用插件中多选。留空表示允许全部，黑名单优先。",
+    "hint": "在当前已启用插件中多选。保存后会把所选插件的命令自动加入命令白名单。留空表示允许全部，黑名单优先。",
     "default": [],
     "options": []
   },
@@ -98,7 +98,7 @@
   "command_allowlist": {
     "type": "list",
     "description": "命令白名单",
-    "hint": "在当前可用命令中多选。留空表示允许全部，黑名单优先。",
+    "hint": "在当前可用命令中多选。插件白名单选中插件后，其命令会在保存时自动添加。留空表示允许全部，黑名单优先。",
     "default": [],
     "options": []
   },
@@ -108,6 +108,12 @@
     "hint": "始终排除所选命令，优先级高于白名单。",
     "default": [],
     "options": []
+  },
+  "linked_plugin_commands": {
+    "type": "list",
+    "description": "插件白名单自动关联的命令",
+    "default": [],
+    "invisible": true
   },
   "max_commands": {
     "type": "int",

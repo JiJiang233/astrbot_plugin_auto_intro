@@ -16,8 +16,16 @@ from astrbot.core.star.star_handler import EventType, star_handlers_registry
 from .catalog import CapabilityItem, render_section, select_items
 
 PLUGIN_NAME = "astrbot_plugin_auto_intro"
-PLUGIN_VERSION = "1.0.1"
+PLUGIN_VERSION = "1.0.2"
 PROMPT_MARKER = "[AstrBot Auto Introduction]"
+TOOL_RULE_MARKER = "[AstrBot Self Introduction Tool Rule]"
+FIXED_TOOL_RULE = (
+    f"{TOOL_RULE_MARKER}\n"
+    "当用户询问你是谁、怎么使用、有什么功能、你会什么、支持哪些工具、"
+    "插件或命令，以及其他意图相近的问题时，必须调用 "
+    "show_self_introduction 工具取得最新自我介绍和能力目录，再根据工具结果回答。"
+    "不要仅凭记忆回答，不要虚构工具结果中不存在的能力。"
+)
 
 
 class NewContactFilter(filter.CustomFilter):
@@ -147,9 +155,7 @@ class AutoIntroPlugin(Star):
         source = self._intro_source()
         return (
             f"{PROMPT_MARKER}\n{rule}\n\n"
-            "当用户询问你是谁、怎么使用、有什么功能、支持什么命令或工具时，"
-            "调用 show_self_introduction 工具，并结合用户问题选择相关能力介绍；"
-            "不要机械罗列与问题无关的全部项目，也不要声称拥有目录之外的能力。"
+            "介绍能力时结合用户问题选择相关内容，不要机械罗列无关项目。"
             f"\n\n{source}"
         ).strip()
 
@@ -157,11 +163,16 @@ class AutoIntroPlugin(Star):
     async def inject_intro_prompt(
         self, event: AstrMessageEvent, req: ProviderRequest
     ) -> None:
-        if not self._cfg_bool("inject_system_prompt", True):
-            return
-        prompt = self._injected_prompt()
-        if prompt and PROMPT_MARKER not in (req.system_prompt or ""):
-            req.system_prompt = f"{req.system_prompt or ''}\n\n{prompt}".strip()
+        system_prompt = req.system_prompt or ""
+        additions = []
+        if TOOL_RULE_MARKER not in system_prompt:
+            additions.append(FIXED_TOOL_RULE)
+        if self._cfg_bool("inject_system_prompt", True):
+            prompt = self._injected_prompt()
+            if prompt and PROMPT_MARKER not in system_prompt:
+                additions.append(prompt)
+        if additions:
+            req.system_prompt = "\n\n".join([system_prompt, *additions]).strip()
 
     @filter.llm_tool(name="show_self_introduction")
     async def show_self_introduction(

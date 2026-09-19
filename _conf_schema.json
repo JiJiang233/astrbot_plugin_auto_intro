@@ -7,7 +7,8 @@
   },
   "inject_system_prompt": {
     "type": "bool",
-    "description": "注入系统提示词",
+    "description": "注入自定义介绍内容",
+    "hint": "只控制自定义介绍及能力目录。show_self_introduction 工具调用规则始终固定注入。",
     "default": true
   },
   "injected_prompt": {
